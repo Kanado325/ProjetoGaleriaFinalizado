@@ -6,6 +6,7 @@ dependencias:
 npm i;
 composer install;
 copy .env.example .env;
+php artisan storage:link;
 
 rodar o servidor do projeto:
 
