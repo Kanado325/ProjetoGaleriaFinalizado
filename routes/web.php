@@ -23,4 +23,10 @@ Route::post('/publications/{id}/like', [LikeController::class, 'toggle'])
     ->middleware('auth')
     ->name('publications.like');
 
+    Route::put('/photos/{publication}', [GalleryController::class, 'update'])
+    ->name('photos.update');
+
+    Route::delete('/photos/{publication}', [GalleryController::class, 'destroy'])
+    ->name('photos.destroy');
+
 require __DIR__.'/auth.php';

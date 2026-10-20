@@ -258,6 +258,132 @@
             </div>
         </div>
 
+<!-- Modal de edição da publicação -->
+    <div
+        x-show="showEditModal"
+        x-cloak
+        x-transition.opacity
+        @keydown.escape.window="showEditModal = false"
+        @click.self="showEditModal = false"
+        class="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-[#02000f]/60 p-4 backdrop-blur-sm"
+    >
+        <div
+            x-show="showEditModal"
+            x-transition
+            class="relative my-auto max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-gray-200 bg-[#fcf7f0] p-6 shadow-2xl"
+        >
+            <div class="mb-6 flex items-center justify-between">
+                <h2 class="text-xl font-bold">Editar publicação</h2>
+
+                <button
+                    type="button"
+                    @click="showEditModal = false"
+                    class="text-2xl font-bold transition hover:text-violet-600"
+                    aria-label="Fechar modal"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <form @submit.prevent="updatePhoto()" class="space-y-4">
+                <div>
+                    <label for="edit_photo_title"
+                        class="mb-1 block text-sm font-semibold">
+                        Nome da foto
+                    </label>
+
+                    <input
+                        id="edit_photo_title"
+                        type="text"
+                        x-model="editForm.title"
+                        maxlength="255"
+                        required
+                        class="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                    >
+                </div>
+
+                <div>
+                    <label for="edit_photo_location"
+                        class="mb-1 block text-sm font-semibold">
+                        Localização
+                    </label>
+
+                    <input
+                        id="edit_photo_location"
+                        type="text"
+                        x-model="editForm.location"
+                        maxlength="255"
+                        required
+                        class="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                    >
+                </div>
+
+                <div>
+                    <label for="edit_photo_image"
+                        class="mb-2 block text-sm font-semibold">
+                        Nova imagem
+                    </label>
+
+                    <img
+                        :src="editPreview || (editingPhoto ? editingPhoto.image_url : '')"
+                        alt="Prévia da foto"
+                        class="mb-3 h-48 w-full rounded-lg bg-gray-100 object-contain"
+                    >
+
+                    <input
+                        id="edit_photo_image"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        @change="selectEditImage($event)"
+                        class="w-full rounded-lg border border-gray-300 bg-white p-2 text-sm"
+                    >
+
+                    <p class="mt-1 text-xs text-gray-500">
+                        Se não selecionar uma imagem, a atual será mantida.
+                        Máximo: 10 MB.
+                    </p>
+                </div>
+
+                <template x-if="editError">
+                    <p
+                        class="whitespace-pre-line text-sm text-red-600"
+                        x-text="editError"
+                    ></p>
+                </template>
+
+                <div class="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                        type="button"
+                        @click="deletePhoto()"
+                        :disabled="savingEdit || deletingPhoto"
+                        class="rounded-lg px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                    >
+                        <span x-text="deletingPhoto ? 'Excluindo...' : 'Excluir foto'"></span>
+                    </button>
+
+                    <div class="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            @click="showEditModal = false"
+                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-100"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            :disabled="savingEdit || deletingPhoto"
+                            class="rounded-lg bg-[#02000f] px-5 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <span x-text="savingEdit ? 'Salvando...' : 'Salvar alterações'"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
         <!-- Busca -->
         <div class="relative mx-auto mb-8 w-full max-w-xl">
             <input
@@ -285,74 +411,103 @@
             <p class="mb-6 text-center text-sm text-gray-500">Carregando publicações...</p>
         </template>
 
-        <!-- Galeria -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-            <template x-for="photo in photos" :key="photo.id">
-                <article class="group relative overflow-hidden rounded border border-gray-300 shadow-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg">
+        
+<!-- Galeria -->
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+    <template x-for="photo in photos" :key="photo.id">
+        <article class="group relative overflow-hidden rounded border border-gray-300 shadow-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg">
 
-                    <!-- Imagem -->
-                    <div class="relative overflow-hidden">
-                        <img
-                            :src="photo.image_url"
-                            :alt="photo.title || 'Fotografia publicada'"
-                            loading="lazy"
-                            class="h-64 w-full bg-gray-100 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            <!-- Imagem -->
+            <div class="relative overflow-hidden">
+                <img
+                    :src="photo.image_url"
+                    :alt="photo.title || 'Fotografia publicada'"
+                    loading="lazy"
+                    class="h-64 w-full bg-gray-100 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                >
+
+                <!-- Três pontos: somente o dono da publicação -->
+                <template
+                    x-if="user
+                        && user.role === 'fotografo'
+                        && String(photo.user_id) === String(user.id)"
+                >
+                    <button
+                        type="button"
+                        @click.stop="openEditModal(photo)"
+                        aria-label="Editar publicação"
+                        title="Opções da foto"
+                        class="absolute left-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#02000f] shadow-md transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    >
+                        <svg
+                            class="h-5 w-5"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            aria-hidden="true"
                         >
+                            <circle cx="12" cy="5" r="1.8"/>
+                            <circle cx="12" cy="12" r="1.8"/>
+                            <circle cx="12" cy="19" r="1.8"/>
+                        </svg>
+                    </button>
+                </template>
 
-                        <!-- Informações no hover -->
-                        <div class="pointer-events-none absolute inset-0 flex flex-col justify-end bg-[#02000f]/75 p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                            <p
-                                class="text-sm font-semibold"
-                                x-text="'Foto tirada por: ' + (photo.photographer || 'Desconhecido')"
-                            ></p>
+                <!-- Informações exibidas ao passar o mouse -->
+                <div class="pointer-events-none absolute inset-0 flex flex-col justify-end bg-[#02000f]/75 p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <p
+                        class="text-sm font-semibold"
+                        x-text="'Foto tirada por: ' + (photo.photographer || 'Desconhecido')"
+                    ></p>
 
-                            <p
-                                class="text-sm"
-                                x-text="'Local: ' + (photo.location || 'Não informado')"
-                            ></p>
-                        </div>
-                    </div>
+                    <p
+                        class="text-sm"
+                        x-text="'Local: ' + (photo.location || 'Não informado')"
+                    ></p>
+                </div>
+            </div>
 
-                    <!-- Título e curtidas -->
-                    <div class="flex items-center justify-between gap-3 border-t border-gray-100 bg-[#fcf7f0] p-4">
-                        <span
-                            class="min-w-0 truncate font-semibold text-gray-800"
-                            :title="photo.title"
-                            x-text="photo.title"
-                        ></span>
+            <!-- Título e curtidas -->
+            <div class="flex items-center justify-between gap-3 border-t border-gray-100 bg-[#fcf7f0] p-4">
+                <span
+                    class="min-w-0 truncate font-semibold text-gray-800"
+                    :title="photo.title"
+                    x-text="photo.title"
+                ></span>
 
-                        <div class="flex shrink-0 items-center gap-1.5">
-                            <button
-                                type="button"
-                                @click="toggleLike(photo)"
-                                :disabled="likingIds.includes(photo.id)"
-                                :aria-label="photo.is_liked ? 'Remover curtida' : 'Curtir foto'"
-                                class="transition-transform hover:scale-110 focus:outline-none disabled:opacity-50"
-                            >
-                                <svg
-                                    class="h-6 w-6 transition-colors"
-                                    :class="photo.is_liked ? 'fill-current text-violet-500' : 'fill-none text-[#02000f]'"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                    />
-                                </svg>
-                            </button>
+                <div class="flex shrink-0 items-center gap-1.5">
+                    <button
+                        type="button"
+                        @click="toggleLike(photo)"
+                        :disabled="likingIds.includes(photo.id)"
+                        :aria-label="photo.is_liked ? 'Remover curtida' : 'Curtir foto'"
+                        class="transition-transform hover:scale-110 focus:outline-none disabled:opacity-50"
+                    >
+                        <svg
+                            class="h-6 w-6 transition-colors"
+                            :class="photo.is_liked ? 'fill-current text-violet-500' : 'fill-none text-[#02000f]'"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                        </svg>
+                    </button>
 
-                            <span
-                                class="font-bold text-sm"
-                                x-text="photo.likes_count ?? 0"
-                            ></span>
-                        </div>
-                    </div>
-                </article>
-            </template>
-        </div>
+                    <span
+                        class="text-sm font-bold"
+                        x-text="photo.likes_count ?? 0"
+                    ></span>
+                </div>
+            </div>
+
+        </article>
+    </template>
+</div>
+
 
         <template x-if="!loadingPhotos && photos.length === 0 && !searchError">
             <p class="py-10 text-center text-gray-500">
@@ -685,6 +840,20 @@
     <script>
         function galleryApp() {
             return {
+
+                showEditModal: false,
+                editingPhoto: null,
+                savingEdit: false,
+                deletingPhoto: false,
+                editError: '',
+                editPreview: '',
+
+                editForm: {
+                    title: '',
+                    location: '',
+                    image: null
+                },
+
                 photos: [],
                 searchQuery: '',
                 searchError: '',
@@ -728,6 +897,156 @@
                         return { message: text };
                     }
                 },
+
+
+openEditModal(photo) {
+    if (
+        !this.user ||
+        this.user.role !== 'fotografo' ||
+        String(photo.user_id) !== String(this.user.id)
+    ) {
+        return;
+    }
+
+    this.editingPhoto = photo;
+
+    this.editForm = {
+        title: photo.title || '',
+        location: photo.location || '',
+        image: null
+    };
+
+    this.editPreview = '';
+    this.editError = '';
+    this.showEditModal = true;
+
+    const input = document.getElementById('edit_photo_image');
+
+    if (input) {
+        input.value = '';
+    }
+},
+
+selectEditImage(event) {
+    const file = event.target.files[0] || null;
+
+    this.editForm.image = file;
+    this.editPreview = '';
+
+    if (file) {
+        this.editPreview = URL.createObjectURL(file);
+    }
+},
+
+async updatePhoto() {
+    if (!this.editingPhoto || this.savingEdit || this.deletingPhoto) {
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append('title', this.editForm.title);
+    formData.append('location', this.editForm.location);
+
+    if (this.editForm.image) {
+        formData.append('image', this.editForm.image);
+    }
+
+    this.savingEdit = true;
+    this.editError = '';
+
+    try {
+        const response = await fetch(
+            `/photos/${this.editingPhoto.id}`,
+            {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: (() => {
+                    formData.append('_method', 'PUT');
+                    return formData;
+                })()
+            }
+        );
+
+        const data = await this.readResponse(response);
+
+        if (!response.ok) {
+            let message = data.message || 'Não foi possível atualizar a foto.';
+
+            if (data.errors) {
+                message = Object.values(data.errors).flat().join('\n');
+            }
+
+            throw new Error(message);
+        }
+
+        this.showEditModal = false;
+        this.editingPhoto = null;
+        this.editPreview = '';
+
+        await this.fetchPhotos();
+
+        if (this.openProfileModal) {
+            await this.fetchStats();
+        }
+    } catch (error) {
+        console.error('Erro ao editar publicação:', error);
+        this.editError = error.message || 'Erro ao editar a publicação.';
+    } finally {
+        this.savingEdit = false;
+    }
+},
+
+async deletePhoto() {
+    if (!this.editingPhoto || this.savingEdit || this.deletingPhoto) {
+        return;
+    }
+
+    if (!confirm('Tem certeza de que deseja excluir esta foto? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    this.deletingPhoto = true;
+    this.editError = '';
+
+    try {
+        const response = await fetch(
+            `/photos/${this.editingPhoto.id}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }
+        );
+
+        const data = await this.readResponse(response);
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Não foi possível excluir a foto.');
+        }
+
+        this.showEditModal = false;
+        this.editingPhoto = null;
+        this.editPreview = '';
+
+        await this.fetchPhotos();
+
+        if (this.openProfileModal) {
+            await this.fetchStats();
+        }
+    } catch (error) {
+        console.error('Erro ao excluir publicação:', error);
+        this.editError = error.message || 'Erro ao excluir a publicação.';
+    } finally {
+        this.deletingPhoto = false;
+    }
+},
+
 
                 async uploadPhoto() {
                     if (!this.user || this.user.role !== 'fotografo') {
@@ -893,11 +1212,6 @@
                     this.statsError = '';
 
                     try {
-                        /*
-                         * As estatísticas são calculadas a partir da galeria carregada.
-                         * Para números totais, inclusive com a busca ativa,
-                         * o ideal é disponibilizar esses valores pelo backend.
-                         */
                         const ownPhotos = this.photos.filter(photo =>
                             String(photo.photographer_id ?? photo.user_id) === String(this.user.id)
                         );
