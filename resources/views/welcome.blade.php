@@ -30,47 +30,19 @@
     x-init="fetchPhotos()"
 >
     <!-- Cabeçalho -->
-    <header class="flex flex-col gap-4 border-b border-gray-200 px-4 py-4 md:flex-row md:items-center md:justify-between md:gap-0 md:px-6">
+    
+    <header class="flex items-center justify-between border-b border-gray-200 px-4 py-2 md:px-6">
+        <!-- Nome da aplicação à esquerda -->
+        <a href="/" class="flex items-center gap-2">
+            <span class="inline-block text-3xl text-violet-400 transition-transform duration-300 hover:rotate-90">⚛</span>
 
-        <!-- Usuário -->
-        <div class="flex w-full items-center justify-center gap-3 md:w-1/3 md:justify-start">
-            <template x-if="user">
-                <div class="flex items-center gap-3">
-                    <img
-                        :src="user.profile_img
-                            ? '/storage/' + user.profile_img
-                            : '/images/default-img.png'"
-                        alt="Foto de perfil"
-                        class="h-10 w-10 shrink-0 rounded-full border border-gray-200 object-cover"
-                    >
-
-                    <span
-                        class="max-w-[130px] truncate font-semibold"
-                        x-text="'@' + (user.username || user.name)"
-                    ></span>
-
-                    <button
-                        type="button"
-                        @click="openProfileModal = true; fetchStats()"
-                        :disabled="user.role !== 'fotografo'"
-                        class="whitespace-nowrap rounded bg-[#02000f] px-3 py-1 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        Ver Perfil
-                    </button>
-                </div>
-            </template>
-        </div>
-
-        <!-- Nome da aplicação -->
-        <div class="order-first w-full text-center md:order-none md:w-1/3">
             <h1 class="text-xl font-bold tracking-tight text-[#02000f] sm:text-2xl">
-                <span class="inline-block text-3xl text-violet-400 transition-transform duration-300 hover:rotate-12">⚛</span>
                 Ateliê <span class="text-violet-400">Sonhador</span>
             </h1>
-        </div>
+        </a>
 
-        <!-- Login / Logout -->
-        <div class="flex w-full justify-center md:w-1/3 md:justify-end">
+        <!-- Login / Logout à direita -->
+        <div class="flex items-center justify-end">
             <template x-if="!user">
                 <button
                     type="button"
@@ -94,6 +66,36 @@
             </template>
         </div>
     </header>
+
+<!-- Informações do usuário abaixo do cabeçalho -->
+<div class="w-full px-4 pt-5 md:px-6">
+    <template x-if="user">
+        <div class="flex items-center gap-3">
+            <img
+                :src="user.profile_img
+                    ? '/storage/' + user.profile_img
+                    : '/images/default-img.png'"
+                alt="Foto de perfil"
+                class="h-12 w-12 shrink-0 rounded-full border border-gray-200 object-cover"
+            >
+
+            <span
+                class="max-w-[180px] truncate font-semibold text-[#02000f]"
+                x-text="'@' + (user.username || user.name)"
+            ></span>
+
+            <button
+                type="button"
+                @click="openProfileModal = true; fetchStats()"
+                :disabled="user.role !== 'fotografo'"
+                class="whitespace-nowrap rounded bg-[#02000f] px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                Ver Perfil
+            </button>
+        </div>
+    </template>
+</div>
+
 
     <!-- Perfil do fotógrafo -->
     <div
@@ -145,19 +147,41 @@
     <!-- Conteúdo principal -->
     <main class="mx-auto w-full max-w-6xl flex-grow px-4 py-8">
 
-        <!-- Botão de publicação -->
+
+    <!-- Upload e pesquisa -->
+    <div class="mb-8 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+
+        <!-- Upload: somente para fotógrafos -->
         <template x-if="user && user.role === 'fotografo'">
-            <div class="mb-6 flex justify-start">
-                <button
-                    type="button"
-                    @click="showUploadModal = true"
-                    class="flex items-center gap-2 rounded-lg bg-[#02000f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                >
-                    <span class="text-xl">+</span>
-                    Upload de foto
-                </button>
-            </div>
+            <button
+                type="button"
+                @click="showUploadModal = true"
+                class="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#02000f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+                <span class="text-xl">+</span>
+                Upload de foto
+            </button>
         </template>
+
+        <!-- Pesquisa de fotógrafos -->
+        <div class="relative w-full sm:max-w-xl sm:flex-1">
+            <input
+                type="text"
+                x-model="searchQuery"
+                @input.debounce.300ms="fetchPhotos()"
+                placeholder="Pesquisar fotógrafo..."
+                aria-label="Pesquisar fotógrafo"
+                class="w-full rounded-lg border border-gray-300 bg-white py-3 pl-4 pr-12 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-[#02000f] focus:outline-none focus:ring-2 focus:ring-[#02000f]/10"
+            >
+
+            <img
+                src="/icons/lupa.svg"
+                alt=""
+                class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 opacity-50"
+            >
+        </div>
+
+    </div>
 
         <!-- Modal de publicação -->
         <div
@@ -384,23 +408,6 @@
     </div>
 
 
-        <!-- Busca -->
-        <div class="relative mx-auto mb-8 w-full max-w-xl">
-            <input
-                type="text"
-                x-model="searchQuery"
-                @input.debounce.300ms="fetchPhotos()"
-                placeholder="Pesquisar fotógrafo..."
-                aria-label="Pesquisar fotógrafo"
-                class="w-full rounded-lg border border-gray-300 bg-white py-3 pl-4 pr-12 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-[#02000f] focus:outline-none focus:ring-2 focus:ring-[#02000f]/10"
-            >
-
-            <img
-                src="/icons/lupa.svg"
-                alt=""
-                class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 opacity-50"
-            >
-        </div>
 
         <!-- Erros e estado de carregamento -->
         <template x-if="searchError">
@@ -411,103 +418,106 @@
             <p class="mb-6 text-center text-sm text-gray-500">Carregando publicações...</p>
         </template>
 
-        
-<!-- Galeria -->
-<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-    <template x-for="photo in photos" :key="photo.id">
-        <article class="group relative overflow-hidden rounded border border-gray-300 shadow-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg">
+    <!-- Galeria -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+        <template x-for="photo in photos" :key="photo.id">
+            <article class="relative overflow-hidden rounded border border-gray-300 bg-[#fcf7f0] shadow-sm">
 
-            <!-- Imagem -->
-            <div class="relative overflow-hidden">
-                <img
-                    :src="photo.image_url"
-                    :alt="photo.title || 'Fotografia publicada'"
-                    loading="lazy"
-                    class="h-64 w-full bg-gray-100 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                >
-
-                <!-- Três pontos: somente o dono da publicação -->
-                <template
-                    x-if="user
-                        && user.role === 'fotografo'
-                        && String(photo.user_id) === String(user.id)"
-                >
-                    <button
-                        type="button"
-                        @click.stop="openEditModal(photo)"
-                        aria-label="Editar publicação"
-                        title="Opções da foto"
-                        class="absolute left-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#02000f] shadow-md transition hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                <!-- Imagem -->
+                <div class="relative">
+                    <img
+                        :src="photo.image_url"
+                        :alt="photo.title || 'Fotografia publicada'"
+                        loading="lazy"
+                        class="h-64 w-full bg-gray-100 object-cover"
                     >
-                        <svg
-                            class="h-5 w-5"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <circle cx="12" cy="5" r="1.8"/>
-                            <circle cx="12" cy="12" r="1.8"/>
-                            <circle cx="12" cy="19" r="1.8"/>
-                        </svg>
-                    </button>
-                </template>
 
-                <!-- Informações exibidas ao passar o mouse -->
-                <div class="pointer-events-none absolute inset-0 flex flex-col justify-end bg-[#02000f]/75 p-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <p
-                        class="text-sm font-semibold"
-                        x-text="'Foto tirada por: ' + (photo.photographer || 'Desconhecido')"
-                    ></p>
-
-                    <p
-                        class="text-sm"
-                        x-text="'Local: ' + (photo.location || 'Não informado')"
-                    ></p>
-                </div>
-            </div>
-
-            <!-- Título e curtidas -->
-            <div class="flex items-center justify-between gap-3 border-t border-gray-100 bg-[#fcf7f0] p-4">
-                <span
-                    class="min-w-0 truncate font-semibold text-gray-800"
-                    :title="photo.title"
-                    x-text="photo.title"
-                ></span>
-
-                <div class="flex shrink-0 items-center gap-1.5">
-                    <button
-                        type="button"
-                        @click="toggleLike(photo)"
-                        :disabled="likingIds.includes(photo.id)"
-                        :aria-label="photo.is_liked ? 'Remover curtida' : 'Curtir foto'"
-                        class="transition-transform hover:scale-110 focus:outline-none disabled:opacity-50"
+                    <!-- Três pontos: somente o dono da publicação -->
+                    <template
+                        x-if="user
+                            && user.role === 'fotografo'
+                            && String(photo.user_id) === String(user.id)"
                     >
-                        <svg
-                            class="h-6 w-6 transition-colors"
-                            :class="photo.is_liked ? 'fill-current text-violet-500' : 'fill-none text-[#02000f]'"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                        <button
+                            type="button"
+                            @click.stop="openEditModal(photo)"
+                            aria-label="Editar publicação"
+                            title="Opções da foto"
+                            class="absolute left-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#02000f] shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                            />
-                        </svg>
-                    </button>
-
-                    <span
-                        class="text-sm font-bold"
-                        x-text="photo.likes_count ?? 0"
-                    ></span>
+                            <svg
+                                class="h-5 w-5"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                aria-hidden="true"
+                            >
+                                <circle cx="12" cy="5" r="1.8"/>
+                                <circle cx="12" cy="12" r="1.8"/>
+                                <circle cx="12" cy="19" r="1.8"/>
+                            </svg>
+                        </button>
+                    </template>
                 </div>
-            </div>
 
-        </article>
-    </template>
-</div>
+                <!-- Título, fotógrafo, local e curtidas -->
+                <div class="border-t border-gray-200 p-4">
 
+                    <div class="flex items-start justify-between gap-3">
+                        <h3
+                            class="min-w-0 break-words font-semibold text-gray-800"
+                            x-text="photo.title || 'Sem título'"
+                        ></h3>
+
+                        <!-- Curtidas -->
+                        <div class="flex shrink-0 items-center gap-1.5">
+                            <button
+                                type="button"
+                                @click="toggleLike(photo)"
+                                :disabled="likingIds.includes(photo.id)"
+                                :aria-label="photo.is_liked ? 'Remover curtida' : 'Curtir foto'"
+                                class="focus:outline-none disabled:opacity-50"
+                            >
+                                <svg
+                                    class="h-6 w-6"
+                                    :class="photo.is_liked
+                                        ? 'fill-current text-violet-500'
+                                        : 'fill-none text-[#02000f]'"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                    />
+                                </svg>
+                            </button>
+
+                            <span
+                                class="text-sm font-bold"
+                                x-text="photo.likes_count ?? 0"
+                            ></span>
+                        </div>
+                    </div>
+
+                    <!-- Informações permanentes -->
+                    <div class="mt-2 space-y-1 text-sm text-gray-600">
+                        <p>
+                            <span class="font-semibold text-[#02000f]">Foto tirada por:</span>
+                            <span x-text="photo.photographer || 'Desconhecido'"></span>
+                        </p>
+
+                        <p>
+                            <span class="font-semibold text-[#02000f]">Local:</span>
+                            <span x-text="photo.location || 'Não informado'"></span>
+                        </p>
+                    </div>
+
+                </div>
+            </article>
+        </template>
+    </div>
 
         <template x-if="!loadingPhotos && photos.length === 0 && !searchError">
             <p class="py-10 text-center text-gray-500">
@@ -797,21 +807,11 @@
     </div>
 
     <!-- Rodapé -->
-    <footer class="mt-16 border-t border-white/10 bg-[#02000f] px-6 py-4 text-white sm:px-10">
-        <div class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-6 sm:grid-cols-3">
+    
+    <footer class="mt-16 border-t border-white/10 bg-[#02000f] px-6 py-2 text-white sm:px-10">
+        <div class="mx-auto flex max-w-7xl flex-col items-center gap-3">
 
-            <a
-                href="/"
-                aria-label="Ateliê Sonhador - Início"
-                class="flex items-center justify-center gap-2 sm:justify-self-start"
-            >
-                <span class="text-3xl text-violet-400 transition-transform duration-300 hover:rotate-12">⚛</span>
-
-                <span class="text-sm font-semibold tracking-wide">
-                    Ateliê <span class="text-violet-400">Sonhador</span>
-                </span>
-            </a>
-
+            <!-- Redes sociais -->
             <nav aria-label="Redes sociais" class="flex items-center justify-center gap-3">
                 <a href="#" aria-label="TikTok" class="group flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/50 hover:bg-violet-500/10">
                     <img src="/icons/tiktok.svg" alt="" class="h-5 w-5 invert transition-opacity group-hover:opacity-70">
@@ -830,9 +830,11 @@
                 </a>
             </nav>
 
-            <div class="text-center text-xs leading-relaxed text-white/50 sm:justify-self-end sm:text-right">
-                <p>&copy; 2026 <span class="text-white/80">Ateliê Sonhador</span></p>
-            </div>
+            <!-- Copyright centralizado abaixo dos ícones -->
+            <p class="text-center text-xs leading-relaxed text-white/50">
+                &copy; 2026 <span class="text-white/80">Ateliê Sonhador</span>
+            </p>
+
         </div>
     </footer>
 
