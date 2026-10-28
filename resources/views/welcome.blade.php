@@ -149,7 +149,7 @@
 
 
     <!-- Upload e pesquisa -->
-    <div class="mb-8 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+    <div class="mb-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:justify-center">
 
         <!-- Upload: somente para fotógrafos -->
         <template x-if="user && user.role === 'fotografo'">
